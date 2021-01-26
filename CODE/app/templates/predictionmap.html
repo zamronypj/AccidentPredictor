@@ -262,10 +262,10 @@
     }
 // https://stackoverflow.com/questions/1006654/fastest-way-to-find-distance-between-two-lat-long-points
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWXiPZ_g6KUTc_5QN73fz7fBHPgzLCx78&libraries=places&callback=initMap"
-        async defer></script>
 <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery.datetimepicker.full.js') }}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ mapKey }}&libraries=places&callback=initMap"
+        async defer></script>
 <script language="javascript" type="text/javascript">
      $(window).load(function() {
      $('#loading').hide();

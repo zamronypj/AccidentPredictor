@@ -1,0 +1,6 @@
+
+Config = {
+    'darkskykey': '[[ your darksky key]]',
+    'googlekey' :"[[ your google key map ]]"
+
+}

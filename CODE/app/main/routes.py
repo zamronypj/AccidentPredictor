@@ -1,8 +1,9 @@
 from flask import render_template, request, Blueprint, jsonify
-from app.api_call_pred import api_call
+from app.api_call_pred import api_call, api_call_no_google
 import datetime
 import json
 import traceback
+from app.config import Config
 
 main = Blueprint('main', __name__)
 
@@ -22,7 +23,7 @@ def interaction():
 
 @main.route("/map")
 def map():
-    return render_template('predictionmap.html')
+    return render_template('predictionmap.html', mapKey = Config['googlekey'])
 
 @main.route("/month")
 def month():
@@ -43,7 +44,7 @@ def casualties():
 @main.route("/boroughs")
 def boroughs():
     return render_template('5boroughs.html')
-	
+
 @main.route("/london")
 def london():
 
@@ -70,3 +71,21 @@ def prediction():
 
         return jsonify({'trace': traceback.format_exc()})
 
+#API to get user inputs
+@main.route('/simple-prediction', methods=['POST'])
+def simple_prediction():
+    try:
+        lat = request.form['lat']
+        lon = request.form['lon']
+        date_time = request.form['date_time']
+
+        #process time
+        tm = datetime.datetime.strptime(date_time,'%Y/%m/%d %H:%M').strftime('%Y-%m-%dT%H:%M')
+
+        out = api_call_no_google(lat, lon, tm)
+
+        return json.dumps(out)
+
+    except:
+
+        return jsonify({'trace': traceback.format_exc()})

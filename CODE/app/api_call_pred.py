@@ -186,3 +186,52 @@ def api_call(origin, destination, tm):
 
         return final
 
+def api_call_no_google(lat, lon, tm):
+
+    #parse time
+    datetime_object = datetime.datetime.strptime(tm, '%Y-%m-%dT%H:%M')
+
+    lats = [lat, lat]
+    longs = [lon, lon]
+    google_count_lat_long = 2
+
+    # calculate distance between past accident points and route
+    dist = calc_distance(accident_dataset, lats, longs, google_count_lat_long)
+
+    # filter for past accident points with distance <50m - route cluster
+    dat = dist[dist['distance'] < 0.050][['Longitude','Latitude','Day_of_Week','Local_Authority_(District)',
+                                               '1st_Road_Class','1st_Road_Number','Speed_limit', 'Year','Cluster',
+                                               'Day_of_year', 'Hour']]
+
+    #if no cluster, exit
+    if len(dat) == 0:
+        return print(" Hooray! No accidents predicted in your route.")
+
+    else:
+        # filter for accident points in route cluster
+        #dat = accident_dataset[accident_dataset['Cluster'].isin(list(clusters['Cluster']))]
+        dat = dat.drop(columns=['Hour', 'Day_of_year', 'Day_of_Week', 'Year'], axis=0)
+        dat['Hour'] = datetime_object.hour
+        day_of_year = (datetime_object - datetime.datetime(datetime_object.year, 1, 1)).days + 1
+        dat['Day_of_year'] = day_of_year
+        day_of_week = datetime_object.date().weekday() + 1
+        dat['Day_of_Week'] = day_of_week
+        dat['Year'] = datetime_object.year
+
+        #get weather prediction for unique cluster in past accident dataset
+        ucluster = list(dat['Cluster'].unique())
+        clusters = dat[dat['Cluster'].isin(ucluster)].drop_duplicates(subset='Cluster', keep='first')
+        weather = call_darksky(clusters, darkskykey, tm)
+
+        # merge with accident data - df with latlong and weather
+        final_df = pd.merge(dat, weather, how='left', on=['Cluster'])
+        final_df = final_df.drop(columns=['time', 'summary', 'icon', 'ozone'], axis=0)
+        final_df = final_df[model_columns]
+
+        #run model predicition
+        processed_results = model_pred(final_df)
+
+        final = {}
+        final["accidents"] = processed_results
+
+        return final
